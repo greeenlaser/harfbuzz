@@ -14,7 +14,7 @@ LICENSE_ORIGIN=../COPYING
 LICENSE_TARGET=COPYING
 
 SRC_ORIGIN=../src
-SRC_TARGET=src
+SRC_TARGET=.
 
 case "$1" in
     --linux)
@@ -39,17 +39,16 @@ esac
 # Copy sources, headers and license
 #
 
-if [ -d "${SRC_TARGET}" ]; then
-    rm -rf "${SRC_TARGET}"
-fi
-mkdir "${SRC_TARGET}"
-
 mf --o --f "${LICENSE_ORIGIN}" --t "${LICENSE_TARGET}"
 mv "${LICENSE_TARGET}" "LICENSE"
 
 # Sources and headers
 
-cp -R "${SRC_ORIGIN}/." "${SRC_TARGET}/."
+if [ -d "include" ]; then
+    rm -rf "include"
+fi
+
+mf --o --f "${SRC_ORIGIN}" --t "${SRC_TARGET}"
 
 #
 # Compile
@@ -62,7 +61,15 @@ kalamake ${BUILD_DEBUG} || exit 1
 # Cleanup
 #
 
-rm -rf "${SRC_TARGET}"
+# Rename harfbuzz src dir to include dir
+
+mv "src" "include"
+
+# Delete all files that arent .h or .hh
+find "include" -type f ! \( -name '*.h' -o -name '*.hh' \) -delete
+
+# Delete empty directories recursively
+find "include" -type d -empty -delete
 
 rm -rf "release/obj"
 rm -rf "debug/obj"
